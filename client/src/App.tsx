@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
@@ -7,13 +7,22 @@ import { History } from './pages/History';
 import { Statistics } from './pages/Statistics';
 import { SettingsPage } from './pages/Settings';
 import { useSettings } from './hooks/useSettings';
+import { api } from './services/api';
 
 export default function App() {
   const { settings, loaded, save } = useSettings();
+  const [mode, setMode] = useState<'demo' | 'real' | null>(null);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.theme);
   }, [settings.theme]);
+
+  useEffect(() => {
+    api
+      .getHealth()
+      .then((res) => setMode(res.mode))
+      .catch(() => setMode('demo'));
+  }, []);
 
   if (!loaded) {
     return (
@@ -25,11 +34,13 @@ export default function App() {
 
   return (
     <HashRouter>
-      <div className="demo-banner">
-        ⚠️ MODO DEMO — Todas las cuotas y surebets mostradas son datos simulados,
-        claramente marcados como "DEMO". Conecta un proveedor real en{' '}
-        <code>server/src/providers/</code> antes de operar con dinero real.
-      </div>
+      {mode === 'demo' && (
+        <div className="demo-banner">
+          ⚠️ MODO DEMO — Todas las cuotas y surebets mostradas son datos simulados,
+          claramente marcados como "DEMO". Define <code>ODDS_API_KEY</code> en el
+          backend para usar datos reales.
+        </div>
+      )}
       <div className="app-shell">
         <Sidebar />
         <main className="main-content">

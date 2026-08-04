@@ -34,6 +34,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getHealth(): Promise<{ status: string; mode: 'demo' | 'real' }> {
+    return request('/health');
+  },
+
   getSports(): Promise<{ data: Sport[] }> {
     return request('/sports');
   },
