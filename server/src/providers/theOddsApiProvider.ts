@@ -10,15 +10,27 @@
  * PROTECCIÓN DE CRÉDITOS (muy importante)
  * ------------------------------------------------------------------
  * El plan gratuito da 500 créditos/mes. Cada llamada real a la API
- * cuesta (nº de mercados × nº de regiones) créditos. Si llamáramos a
- * la API cada vez que el frontend refresca (cada 30s), se agotarían
- * los créditos en minutos.
+ * cuesta (nº de deportes consultados × nº de mercados × nº de
+ * regiones) créditos. Si llamáramos a la API cada vez que el frontend
+ * refresca (cada 30s), se agotarían los créditos en minutos.
  *
  * Por eso este provider funciona con una CACHÉ EN MEMORIA:
  *   - El frontend sigue pidiendo datos al backend cada 30s (normal).
  *   - Pero este provider solo llama a la API real de verdad cada
- *     ODDS_API_REFRESH_MINUTES minutos (por defecto 20). El resto de
- *     peticiones se responden con la última copia guardada en memoria.
+ *     ODDS_API_REFRESH_MINUTES minutos (por defecto 1440 = 24h). El
+ *     resto de peticiones se responden con la última copia guardada
+ *     en memoria.
+ *
+ * Ejemplo de cálculo con la configuración por defecto (5 deportes,
+ * 1 mercado "h2h", región "eu", refresco cada 24h):
+ *   coste por actualización = 5 deportes × 1 mercado × 1 región = 5 créditos
+ *   actualizaciones al mes  = 30 (una al día)
+ *   total al mes            = 150 créditos de 500 → sobra margen de sobra
+ *
+ * Si añades más mercados (ODDS_API_MARKETS=h2h,spreads,totals) el
+ * coste por actualización sube a 5 × 3 × 1 = 15 créditos → 450/mes al
+ * refrescar una vez al día. Sigue entrando en el plan gratis, pero ya
+ * sin apenas margen: no bajes de 24h si añades varios mercados.
  * ------------------------------------------------------------------
  */
 
@@ -27,7 +39,7 @@ import { OddsProvider } from './types';
 
 const API_KEY = process.env.ODDS_API_KEY;
 const REGIONS = process.env.ODDS_API_REGIONS || 'eu';
-const REFRESH_MINUTES = Number(process.env.ODDS_API_REFRESH_MINUTES) || 20;
+const REFRESH_MINUTES = Number(process.env.ODDS_API_REFRESH_MINUTES) || 1440; // 1440 = 24h
 const REFRESH_MS = REFRESH_MINUTES * 60 * 1000;
 
 // Claves de deporte de The Odds API que se consultan. Configurable por
@@ -46,9 +58,28 @@ const SPORT_KEYS = process.env.ODDS_API_SPORTS
   ? process.env.ODDS_API_SPORTS.split(',').map((s) => s.trim())
   : DEFAULT_SPORT_KEYS;
 
+// Tipos de mercado a consultar por evento. "h2h" = ganador del partido
+// (1X2 en fútbol). "spreads" = hándicap. "totals" = más/menos goles o
+// puntos. Cada mercado adicional que añadas aquí SUMA al coste en
+// créditos de cada actualización real (coste = nº de mercados × nº de
+// deportes × nº de regiones). Ver comentario de costes más abajo.
+const DEFAULT_MARKETS = ['h2h'];
+
+const MARKETS = process.env.ODDS_API_MARKETS
+  ? process.env.ODDS_API_MARKETS.split(',').map((s) => s.trim())
+  : DEFAULT_MARKETS;
+
+const MARKET_LABELS: Record<string, string> = {
+  h2h: 'Ganador del partido',
+  spreads: 'Hándicap',
+  totals: 'Más/Menos',
+};
+
 interface RawOutcome {
   name: string;
   price: number;
+  /** Presente en "spreads" (hándicap) y "totals" (más/menos) */
+  point?: number;
 }
 
 interface RawMarket {
@@ -85,7 +116,7 @@ function mapSportKey(key: string): Sport | null {
 async function fetchSportOdds(sportKey: string): Promise<MarketEvent[]> {
   const url =
     `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/` +
-    `?apiKey=${API_KEY}&regions=${REGIONS}&markets=h2h&oddsFormat=decimal`;
+    `?apiKey=${API_KEY}&regions=${REGIONS}&markets=${MARKETS.join(',')}&oddsFormat=decimal`;
 
   const res = await fetch(url);
 
@@ -104,36 +135,64 @@ async function fetchSportOdds(sportKey: string): Promise<MarketEvent[]> {
   const sport = mapSportKey(sportKey);
   if (!sport) return [];
 
-  return raw.map((event) => {
-    const quotes: OddQuote[] = [];
+  const events: MarketEvent[] = [];
 
-    for (const bookmaker of event.bookmakers) {
-      const h2h = bookmaker.markets.find((m) => m.key === 'h2h');
-      if (!h2h) continue;
-      for (const outcome of h2h.outcomes) {
-        quotes.push({
-          outcomeId: outcome.name,
-          outcomeLabel: outcome.name,
-          bookmaker: bookmaker.title,
-          odds: outcome.price,
-        });
+  // Un mismo partido genera UN MarketEvent POR CADA TIPO DE MERCADO
+  // (h2h, spreads, totals...). No se pueden mezclar en un mismo cálculo
+  // de arbitraje porque son apuestas distintas (ganador vs hándicap vs
+  // más/menos), cada una con sus propias cuotas y resultados posibles.
+  for (const marketKey of MARKETS) {
+    for (const event of raw) {
+      const quotes: OddQuote[] = [];
+
+      for (const bookmaker of event.bookmakers) {
+        const market = bookmaker.markets.find((m) => m.key === marketKey);
+        if (!market) continue;
+
+        for (const outcome of market.outcomes) {
+          // Para spreads/totals, el "point" (línea de hándicap o de
+          // más/menos) forma parte del resultado: una cuota de "Más 2.5"
+          // NO es el mismo resultado que "Más 3.5". Si no las separamos,
+          // se compararían cuotas de líneas distintas como si fueran
+          // arbitraje real, y no lo serían.
+          const hasPoint = typeof outcome.point === 'number';
+          const outcomeId = hasPoint ? `${outcome.name}@${outcome.point}` : outcome.name;
+          const outcomeLabel = hasPoint ? `${outcome.name} ${outcome.point! > 0 ? '+' : ''}${outcome.point}` : outcome.name;
+
+          quotes.push({
+            outcomeId,
+            outcomeLabel,
+            bookmaker: bookmaker.title,
+            odds: outcome.price,
+          });
+        }
       }
+
+      if (quotes.length === 0) continue;
+
+      const uniqueOutcomes = new Set(quotes.map((q) => q.outcomeId)).size;
+      const marketLabel =
+        marketKey === 'h2h'
+          ? uniqueOutcomes > 2
+            ? '1X2'
+            : 'Ganador del partido'
+          : MARKET_LABELS[marketKey] || marketKey;
+
+      events.push({
+        id: `odds-api-${event.id}-${marketKey}`,
+        sport,
+        competition: event.sport_title,
+        eventName: `${event.home_team} vs ${event.away_team}`,
+        startTime: event.commence_time,
+        market: marketLabel,
+        quotes,
+        isDemo: false,
+        source: 'the-odds-api',
+      });
     }
+  }
 
-    const uniqueOutcomes = new Set(quotes.map((q) => q.outcomeId)).size;
-
-    return {
-      id: `odds-api-${event.id}`,
-      sport,
-      competition: event.sport_title,
-      eventName: `${event.home_team} vs ${event.away_team}`,
-      startTime: event.commence_time,
-      market: uniqueOutcomes > 2 ? '1X2' : 'Ganador del partido',
-      quotes,
-      isDemo: false,
-      source: 'the-odds-api',
-    } as MarketEvent;
-  });
+  return events;
 }
 
 let cache: MarketEvent[] = [];
