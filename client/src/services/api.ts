@@ -51,12 +51,14 @@ export const api = {
     bookmaker?: string;
     minProfit?: number;
     search?: string;
+    sortBy?: string;
   }): Promise<{ data: SurebetRecord[] }> {
     const query = new URLSearchParams();
     if (params.sport && params.sport !== 'todos') query.set('sport', params.sport);
     if (params.bookmaker && params.bookmaker !== 'todas') query.set('bookmaker', params.bookmaker);
     if (params.minProfit) query.set('minProfit', String(params.minProfit));
     if (params.search) query.set('search', params.search);
+    if (params.sortBy) query.set('sortBy', params.sortBy);
     return request(`/surebets/history?${query.toString()}`);
   },
 

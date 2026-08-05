@@ -4,7 +4,7 @@ import { Filters } from '../components/Filters';
 import { SurebetTable } from '../components/SurebetTable';
 import { useSurebets } from '../hooks/useSurebets';
 import { AppSettings, SurebetFilters } from '../types';
-import { formatCurrency, timeAgo } from '../utils/format';
+import { formatCurrency, formatPercent, timeAgo } from '../utils/format';
 
 interface DashboardProps {
   settings: AppSettings;
@@ -15,6 +15,7 @@ const DEFAULT_FILTERS: SurebetFilters = {
   bookmaker: 'todas',
   minProfit: 0,
   search: '',
+  sortBy: 'profit',
 };
 
 export function Dashboard({ settings }: DashboardProps) {
@@ -31,7 +32,7 @@ export function Dashboard({ settings }: DashboardProps) {
   }, [surebets]);
 
   const filtered = useMemo(() => {
-    return surebets.filter((s) => {
+    const result = surebets.filter((s) => {
       if (filters.sport !== 'todos' && s.sport !== filters.sport) return false;
       if (filters.bookmaker !== 'todas' && !s.bookmakers.includes(filters.bookmaker)) return false;
       if (s.profitPercent < filters.minProfit) return false;
@@ -43,6 +44,16 @@ export function Dashboard({ settings }: DashboardProps) {
       }
       return true;
     });
+
+    const sorted = [...result];
+    if (filters.sortBy === 'startTime') {
+      sorted.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    } else if (filters.sortBy === 'profit') {
+      sorted.sort((a, b) => b.profitPercent - a.profitPercent);
+    } else {
+      sorted.sort((a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime());
+    }
+    return sorted;
   }, [surebets, filters]);
 
   const totalPotentialProfit = filtered.reduce((sum, s) => sum + s.guaranteedProfit, 0);
@@ -87,7 +98,24 @@ export function Dashboard({ settings }: DashboardProps) {
         {error && (
           <div style={{ color: 'var(--red)', fontSize: 13, marginBottom: 12 }}>{error}</div>
         )}
-        <SurebetTable surebets={filtered} currency={settings.currency} />
+        {filtered.length > 0 && filters.sortBy === 'profit' && (
+          <div
+            className="result-box positive"
+            style={{ marginBottom: 18, marginTop: 0 }}
+          >
+            <strong>⭐ Recomendada ahora: {filtered[0].eventName}</strong>
+            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 4 }}>
+              {filtered[0].competition} · {formatPercent(filtered[0].profitPercent)} de beneficio
+              {settings.discreetModeEnabled && ' · importes en modo discreto activados'}
+            </div>
+          </div>
+        )}
+        <SurebetTable
+          surebets={filtered}
+          currency={settings.currency}
+          discreetModeEnabled={settings.discreetModeEnabled}
+          discreetRoundingUnit={settings.discreetRoundingUnit}
+        />
       </div>
     </div>
   );

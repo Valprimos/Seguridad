@@ -558,3 +558,177 @@ button {
   gap: 6px;
   flex-wrap: wrap;
 }
+
+/* ==========================================================================
+   RESPONSIVE / MÓVIL
+   Breakpoint principal: 720px (tablet pequeña / móvil en horizontal e inferior)
+   ========================================================================== */
+
+@media (max-width: 720px) {
+  /* --- Layout general: menos padding, sitio para la barra inferior --- */
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .main-content {
+    padding: 16px 14px 90px; /* 90px abajo para no tapar con la barra inferior */
+  }
+
+  .demo-banner {
+    padding: 8px 14px;
+    font-size: 11.5px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header h1 {
+    font-size: 19px;
+  }
+
+  /* --- Sidebar se convierte en barra de navegación inferior fija --- */
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    padding: 6px 4px;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    z-index: 50;
+  }
+
+  .sidebar-brand,
+  .sidebar-footer {
+    display: none; /* en móvil no hay sitio para el logo grande ni el pie de nota */
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+    gap: 0;
+  }
+
+  .sidebar-link {
+    flex-direction: column;
+    gap: 2px;
+    font-size: 10.5px;
+    padding: 6px 4px;
+    text-align: center;
+    flex: 1;
+  }
+
+  .sidebar-link span:first-child {
+    font-size: 18px;
+  }
+
+  /* --- Tarjetas de estadísticas: 2 por fila en vez de 4 --- */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-card .value {
+    font-size: 19px;
+  }
+
+  /* --- Filtros: apilados y a ancho completo --- */
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters-bar input,
+  .filters-bar select {
+    width: 100%;
+  }
+
+  .filters-bar input[type='search'] {
+    min-width: 0;
+  }
+
+  /* --- Tabla de surebets: de tabla horizontal a lista de tarjetas ---
+     Truco clásico: la tabla pasa a comportarse como bloques, y cada
+     celda usa el atributo data-label (puesto en SurebetTable.tsx) para
+     mostrar su propio título encima del valor, en vez de depender de
+     las columnas de la cabecera (que en móvil se ocultan). */
+  .surebets-table thead {
+    display: none;
+  }
+
+  .surebets-table,
+  .surebets-table tbody,
+  .surebets-table tr,
+  .surebets-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .surebets-table tr {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    padding: 4px 0;
+  }
+
+  .surebets-table td {
+    border-bottom: none;
+    padding: 8px 14px;
+  }
+
+  .surebets-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  /* --- Formularios (Calculadora / Configuración): una columna --- */
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .outcome-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+
+  .outcome-row .icon-btn {
+    width: 100%;
+  }
+
+  .result-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .settings-row > input {
+    width: 100% !important;
+  }
+}

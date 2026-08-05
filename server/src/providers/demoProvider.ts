@@ -184,11 +184,19 @@ export const demoProvider: OddsProvider = {
     return TEMPLATES.map((tpl, idx) => {
       const quotes = generateQuotes(tpl.outcomes);
       return {
-        id: `demo-${idx}-${now}`,
+        // ID ESTABLE: depende solo de la posición de la plantilla, NO
+        // de la hora actual. Si incluyéramos un timestamp aquí, cada
+        // refresco de 30s generaría un "partido" con id distinto, y el
+        // historial se llenaría de partidos duplicados sin fin.
+        id: `demo-${idx}`,
         sport: tpl.sport,
         competition: tpl.competition,
         eventName: tpl.eventName,
-        startTime: new Date(now + randomBetween(1, 48) * 3600 * 1000).toISOString(),
+        // Hora de inicio determinista (no aleatoria en cada refresco),
+        // repartida a lo largo de las próximas horas según la posición
+        // de la plantilla, para poder probar el orden por fecha sin que
+        // la hora "baile" en cada actualización.
+        startTime: new Date(now + (idx + 1) * 4 * 3600 * 1000).toISOString(),
         market: tpl.market,
         quotes,
         isDemo: true,

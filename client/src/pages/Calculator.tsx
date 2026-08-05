@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { calculateArbitrage, ArbitrageResult, OutcomeInput } from '../math/arbitrage';
+import { applyDiscreetRounding } from '../utils/discreetMode';
 import { AppSettings } from '../types';
 import { formatCurrency, formatPercent } from '../utils/format';
 
@@ -20,6 +21,20 @@ export function Calculator({ settings }: CalculatorProps) {
   ]);
   const [result, setResult] = useState<ArbitrageResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const discreet = useMemo(() => {
+    if (!result || !settings.discreetModeEnabled) return null;
+    return applyDiscreetRounding(
+      result.outcomes.map((o) => ({
+        id: o.id,
+        label: o.label,
+        odds: o.odds,
+        bookmaker: o.bookmaker,
+        optimalStake: o.stake,
+      })),
+      settings.discreetRoundingUnit
+    );
+  }, [result, settings.discreetModeEnabled, settings.discreetRoundingUnit]);
 
   function updateOutcome(id: string, patch: Partial<OutcomeInput>) {
     setOutcomes((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));
@@ -181,7 +196,7 @@ export function Calculator({ settings }: CalculatorProps) {
             </div>
 
             <h4 style={{ marginTop: 20, marginBottom: 10, fontSize: 13.5 }}>
-              Reparto de stake por resultado
+              Reparto de stake por resultado (óptimo exacto)
             </h4>
             <table className="surebets-table">
               <thead>
@@ -196,15 +211,66 @@ export function Calculator({ settings }: CalculatorProps) {
               <tbody>
                 {result.outcomes.map((o) => (
                   <tr key={o.id}>
-                    <td>{o.label}</td>
-                    <td>{o.bookmaker || '—'}</td>
-                    <td>{o.odds.toFixed(2)}</td>
-                    <td>{formatCurrency(o.stake, settings.currency)}</td>
-                    <td>{formatCurrency(o.payout, settings.currency)}</td>
+                    <td data-label="Resultado">{o.label}</td>
+                    <td data-label="Casa">{o.bookmaker || '—'}</td>
+                    <td data-label="Cuota">{o.odds.toFixed(2)}</td>
+                    <td data-label="Apostar">{formatCurrency(o.stake, settings.currency)}</td>
+                    <td data-label="Retorno si gana">{formatCurrency(o.payout, settings.currency)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
+            {discreet && (
+              <>
+                <h4 style={{ marginTop: 24, marginBottom: 4, fontSize: 13.5 }}>
+                  Reparto en modo discreto (importes redondeados)
+                </h4>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 0, marginBottom: 10 }}>
+                  Beneficio si gana el peor resultado:{' '}
+                  <strong style={{ color: discreet.isSafe ? 'var(--green)' : 'var(--red)' }}>
+                    {formatCurrency(discreet.worstCaseProfit, settings.currency)} (
+                    {formatPercent(discreet.worstCaseProfitPercent)})
+                  </strong>
+                  {' · '}si gana el mejor: {formatCurrency(discreet.bestCaseProfit, settings.currency)}
+                  {!discreet.isSafe && (
+                    <>
+                      {' — '}
+                      <strong style={{ color: 'var(--red)' }}>
+                        ⚠️ con esta unidad de redondeo, algún resultado quedaría en pérdidas.
+                        Baja la unidad de redondeo en Configuración.
+                      </strong>
+                    </>
+                  )}
+                </p>
+                <table className="surebets-table">
+                  <thead>
+                    <tr>
+                      <th>Resultado</th>
+                      <th>Casa</th>
+                      <th>Cuota</th>
+                      <th>Apostar (discreto)</th>
+                      <th>Retorno si gana</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {discreet.outcomes.map((o) => (
+                      <tr key={o.id}>
+                        <td data-label="Resultado">{o.label}</td>
+                        <td data-label="Casa">{o.bookmaker || '—'}</td>
+                        <td data-label="Cuota">{o.odds.toFixed(2)}</td>
+                        <td data-label="Apostar (discreto)">
+                          {formatCurrency(o.roundedStake, settings.currency)}
+                        </td>
+                        <td data-label="Retorno si gana">
+                          {formatCurrency(o.roundedPayout, settings.currency)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -52,11 +52,20 @@ export interface AppSettings {
   minProfitAlert: number;
   soundAlertsEnabled: boolean;
   browserNotificationsEnabled: boolean;
+  /** "Modo discreto": redondea los importes a apostar para que no se
+   * vean como un cálculo exacto de arbitraje (menos detectable), a
+   * costa de un beneficio garantizado ligeramente menor/variable. */
+  discreetModeEnabled: boolean;
+  /** Unidad de redondeo de los importes en modo discreto (ej: 5 = redondea a múltiplos de 5) */
+  discreetRoundingUnit: number;
 }
+
+export type SortBy = 'detectedAt' | 'startTime' | 'profit';
 
 export interface SurebetFilters {
   sport: Sport | 'todos';
   bookmaker: string | 'todas';
   minProfit: number;
   search: string;
+  sortBy: SortBy;
 }

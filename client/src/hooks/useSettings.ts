@@ -10,6 +10,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   minProfitAlert: 1.5,
   soundAlertsEnabled: true,
   browserNotificationsEnabled: true,
+  discreetModeEnabled: false,
+  discreetRoundingUnit: 5,
 };
 
 export function useSettings() {
@@ -19,7 +21,7 @@ export function useSettings() {
   useEffect(() => {
     api
       .getSettings()
-      .then(setSettings)
+      .then((res) => setSettings({ ...DEFAULT_SETTINGS, ...res }))
       .catch(() => setSettings(DEFAULT_SETTINGS))
       .finally(() => setLoaded(true));
   }, []);

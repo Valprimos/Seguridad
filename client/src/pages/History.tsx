@@ -13,6 +13,7 @@ const DEFAULT_FILTERS: SurebetFilters = {
   bookmaker: 'todas',
   minProfit: 0,
   search: '',
+  sortBy: 'detectedAt',
 };
 
 export function History({ settings }: HistoryProps) {
@@ -28,6 +29,7 @@ export function History({ settings }: HistoryProps) {
         bookmaker: filters.bookmaker,
         minProfit: filters.minProfit,
         search: filters.search,
+        sortBy: filters.sortBy,
       })
       .then((res) => setRecords(res.data))
       .finally(() => setLoading(false));
@@ -55,7 +57,12 @@ export function History({ settings }: HistoryProps) {
             <span className="spinner" /> Cargando historial...
           </div>
         ) : (
-          <SurebetTable surebets={records} currency={settings.currency} />
+          <SurebetTable
+            surebets={records}
+            currency={settings.currency}
+            discreetModeEnabled={settings.discreetModeEnabled}
+            discreetRoundingUnit={settings.discreetRoundingUnit}
+          />
         )}
       </div>
     </div>

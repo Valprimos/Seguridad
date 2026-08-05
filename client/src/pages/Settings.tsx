@@ -143,6 +143,54 @@ export function SettingsPage({ settings, onSave }: SettingsPageProps) {
         </div>
       </div>
 
+      <div className="panel" style={{ marginTop: 20 }}>
+        <h3 style={{ marginTop: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
+          Modo discreto
+        </h3>
+        <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: -6 }}>
+          Redondea los importes a apostar en cada resultado para que no parezcan un
+          cálculo exacto de arbitraje. Reduce (pero no elimina) el riesgo de que una
+          casa te limite la cuenta.{' '}
+          <strong>El beneficio deja de ser idéntico en todos los resultados</strong> —
+          verás un beneficio "peor caso" y "mejor caso" en vez de una única cifra.
+        </p>
+
+        <div className="settings-row">
+          <div>
+            <div className="settings-label">Activar modo discreto</div>
+            <div className="settings-desc">
+              Se aplica en la Calculadora, el Dashboard y el Historial.
+            </div>
+          </div>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={draft.discreetModeEnabled}
+              onChange={(e) => setDraft({ ...draft, discreetModeEnabled: e.target.checked })}
+            />
+            <span className="slider" />
+          </label>
+        </div>
+
+        <div className="settings-row">
+          <div>
+            <div className="settings-label">Redondear importes a múltiplos de</div>
+            <div className="settings-desc">
+              Cuanto mayor sea, más "normales" parecerán las apuestas, pero más se
+              alejan del reparto matemáticamente óptimo.
+            </div>
+          </div>
+          <input
+            type="number"
+            min={1}
+            step={1}
+            style={{ width: 90 }}
+            value={draft.discreetRoundingUnit}
+            onChange={(e) => setDraft({ ...draft, discreetRoundingUnit: Number(e.target.value) })}
+          />
+        </div>
+      </div>
+
       <div style={{ marginTop: 20, display: 'flex', gap: 10, alignItems: 'center' }}>
         <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
           {saving ? 'Guardando...' : 'Guardar cambios'}

@@ -1,4 +1,4 @@
-import { SPORT_LABELS, Sport, SurebetFilters } from '../types';
+import { SortBy, SPORT_LABELS, Sport, SurebetFilters } from '../types';
 
 interface FiltersProps {
   filters: SurebetFilters;
@@ -51,6 +51,15 @@ export function Filters({ filters, onChange, bookmakers }: FiltersProps) {
         <option value={2}>≥ 2%</option>
         <option value={3}>≥ 3%</option>
         <option value={5}>≥ 5%</option>
+      </select>
+
+      <select
+        value={filters.sortBy}
+        onChange={(e) => onChange({ ...filters, sortBy: e.target.value as SortBy })}
+      >
+        <option value="detectedAt">Ordenar: más recientes</option>
+        <option value="startTime">Ordenar: fecha del partido</option>
+        <option value="profit">Ordenar: mayor beneficio</option>
       </select>
     </div>
   );

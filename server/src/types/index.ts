@@ -66,4 +66,6 @@ export interface AppSettings {
   minProfitAlert: number; // % mínimo para disparar alerta
   soundAlertsEnabled: boolean;
   browserNotificationsEnabled: boolean;
+  discreetModeEnabled: boolean;
+  discreetRoundingUnit: number;
 }

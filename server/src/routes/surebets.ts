@@ -26,8 +26,13 @@ function getDefaultBankroll(): number {
 }
 
 function saveSurebet(record: SurebetRecord): void {
+  // OR REPLACE (no OR IGNORE): si esta misma oportunidad (mismo id
+  // estable) ya existía, se ACTUALIZA con las cuotas/beneficio más
+  // recientes en vez de crear una fila duplicada. Esto es clave para
+  // que el historial no se llene de partidos repetidos y para que las
+  // estadísticas de "hoy" no sumen la misma oportunidad una y otra vez.
   db.prepare(
-    `INSERT OR IGNORE INTO surebets
+    `INSERT OR REPLACE INTO surebets
       (id, sport, competition, event_name, market, start_time, detected_at,
        profit_percent, roi, guaranteed_profit, total_stake, bankroll_used,
        bookmakers, outcomes, is_demo, source)
@@ -77,9 +82,9 @@ surebetsRouter.get('/live', async (req, res) => {
   }
 });
 
-// GET /api/surebets/history?sport=futbol&bookmaker=BetDemo+A&minProfit=1&search=Real
+// GET /api/surebets/history?sport=futbol&bookmaker=BetDemo+A&minProfit=1&search=Real&sortBy=startTime
 surebetsRouter.get('/history', (req, res) => {
-  const { sport, bookmaker, minProfit, search, limit } = req.query;
+  const { sport, bookmaker, minProfit, search, limit, sortBy } = req.query;
 
   let query = 'SELECT * FROM surebets WHERE 1=1';
   const params: Record<string, unknown> = {};
@@ -96,7 +101,14 @@ surebetsRouter.get('/history', (req, res) => {
     query += ' AND (event_name LIKE @search OR competition LIKE @search)';
     params.search = `%${search}%`;
   }
-  query += ' ORDER BY detected_at DESC LIMIT @limit';
+
+  const orderColumn =
+    sortBy === 'startTime'
+      ? 'start_time ASC'
+      : sortBy === 'profit'
+      ? 'profit_percent DESC'
+      : 'detected_at DESC';
+  query += ` ORDER BY ${orderColumn} LIMIT @limit`;
   params.limit = limit ? Number(limit) : 200;
 
   let rows = db.prepare(query).all(params) as any[];

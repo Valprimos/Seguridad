@@ -7,7 +7,6 @@
  * ------------------------------------------------------------------
  */
 
-import { randomUUID } from 'crypto';
 import { MarketEvent, SurebetRecord } from '../types';
 import { calculateArbitrage, OutcomeInput } from '../math/arbitrage';
 
@@ -43,7 +42,14 @@ export function detectSurebetForEvent(
   if (!result.isArbitrage) return null;
 
   return {
-    id: randomUUID(),
+    // ID ESTABLE: se basa en el propio evento (mismo partido + mismo
+    // mercado = mismo id siempre), NO en un valor aleatorio. Así, cada
+    // vez que se vuelve a detectar la misma oportunidad, se actualiza
+    // la fila existente en vez de crear una nueva. Esto es lo que
+    // evita que el historial se llene de partidos repetidos y que las
+    // estadísticas de "beneficio potencial hoy" se sumen sin parar en
+    // cada refresco.
+    id: event.id,
     sport: event.sport,
     competition: event.competition,
     eventName: event.eventName,

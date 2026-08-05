@@ -50,16 +50,33 @@ export function initDb(): void {
       theme TEXT NOT NULL,
       min_profit_alert REAL NOT NULL,
       sound_alerts_enabled INTEGER NOT NULL,
-      browser_notifications_enabled INTEGER NOT NULL
+      browser_notifications_enabled INTEGER NOT NULL,
+      discreet_mode_enabled INTEGER NOT NULL DEFAULT 0,
+      discreet_rounding_unit REAL NOT NULL DEFAULT 5
     );
   `);
+
+  // Migración suave para bases de datos creadas ANTES de añadir estas
+  // dos columnas: si la tabla ya existía sin ellas, CREATE TABLE IF NOT
+  // EXISTS no las añade solo, así que lo hacemos a mano (ignorando el
+  // error si ya existen).
+  for (const alter of [
+    'ALTER TABLE settings ADD COLUMN discreet_mode_enabled INTEGER NOT NULL DEFAULT 0',
+    'ALTER TABLE settings ADD COLUMN discreet_rounding_unit REAL NOT NULL DEFAULT 5',
+  ]) {
+    try {
+      db.exec(alter);
+    } catch {
+      // La columna ya existe: no hay nada que hacer.
+    }
+  }
 
   const existing = db.prepare('SELECT id FROM settings WHERE id = 1').get();
   if (!existing) {
     db.prepare(
       `INSERT INTO settings
-        (id, default_bankroll, currency, language, theme, min_profit_alert, sound_alerts_enabled, browser_notifications_enabled)
-       VALUES (1, 1000, 'EUR', 'es', 'dark', 1.5, 1, 1)`
+        (id, default_bankroll, currency, language, theme, min_profit_alert, sound_alerts_enabled, browser_notifications_enabled, discreet_mode_enabled, discreet_rounding_unit)
+       VALUES (1, 1000, 'EUR', 'es', 'dark', 1.5, 1, 1, 0, 5)`
     ).run();
   }
 }

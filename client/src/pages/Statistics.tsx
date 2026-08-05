@@ -67,8 +67,8 @@ export function Statistics({ settings }: StatisticsProps) {
           <tbody>
             {stats.bySport.map((row) => (
               <tr key={row.sport}>
-                <td>{SPORT_LABELS[row.sport]}</td>
-                <td>{row.count}</td>
+                <td data-label="Deporte">{SPORT_LABELS[row.sport]}</td>
+                <td data-label="Surebets detectadas">{row.count}</td>
               </tr>
             ))}
           </tbody>
