@@ -97,3 +97,54 @@ export function calculateArbitrage(
     outcomes: outcomeResults,
   };
 }
+
+/**
+ * PROBLEMA INVERSO: dadas las cuotas YA CONOCIDAS de todos los
+ * resultados MENOS UNO, ¿qué cuota mínima necesitas en el resultado
+ * que falta para lograr al menos "targetProfitPercent" de beneficio?
+ *
+ * Se basa en la misma fórmula del margen: para lograr un beneficio p%,
+ * el margen combinado tiene que ser exactamente:
+ *     M_objetivo = 1 / (1 + p/100)
+ *
+ * Como M = Σ(1/cuota_i), y todas las cuotas menos una ya se conocen:
+ *     1/cuota_que_falta = M_objetivo - Σ(1/cuotas_conocidas)
+ *     cuota_que_falta   = 1 / (M_objetivo - Σ(1/cuotas_conocidas))
+ *
+ * Si esa resta es ≤ 0, es matemáticamente imposible alcanzar ese
+ * beneficio con las cuotas conocidas, sea la que sea la cuota que
+ * falta (ni con una cuota infinita bastaría).
+ */
+export interface MinimumOddsResult {
+  feasible: boolean;
+  /** Cuota mínima necesaria (estrictamente hay que superarla, no vale igualarla) */
+  minOdds: number | null;
+  /** Margen combinado ya aportado por las cuotas conocidas */
+  knownMargin: number;
+}
+
+export function calculateMinimumOdds(
+  knownOdds: number[],
+  targetProfitPercent: number
+): MinimumOddsResult {
+  if (knownOdds.length === 0) {
+    throw new Error('Introduce al menos una cuota conocida.');
+  }
+  if (knownOdds.some((o) => !o || o <= 1)) {
+    throw new Error('Todas las cuotas conocidas deben ser mayores que 1.');
+  }
+
+  const knownMargin = knownOdds.reduce((sum, o) => sum + 1 / o, 0);
+  const targetMargin = 1 / (1 + targetProfitPercent / 100);
+  const remaining = targetMargin - knownMargin;
+
+  if (remaining <= 0) {
+    return { feasible: false, minOdds: null, knownMargin: round(knownMargin, 6) };
+  }
+
+  return {
+    feasible: true,
+    minOdds: round(1 / remaining, 3),
+    knownMargin: round(knownMargin, 6),
+  };
+}
