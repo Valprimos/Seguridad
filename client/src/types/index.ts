@@ -58,6 +58,13 @@ export interface AppSettings {
   discreetModeEnabled: boolean;
   /** Unidad de redondeo de los importes en modo discreto (ej: 5 = redondea a múltiplos de 5) */
   discreetRoundingUnit: number;
+  /** Casas de apuestas VETADAS: excluidas de surebets y cuotas de valor */
+  blockedBookmakers: string[];
+  valueBetsEnabled: boolean;
+  minEvPercent: number;
+  kellyFraction: number;
+  webhookUrl: string;
+  webhookAlertsEnabled: boolean;
 }
 
 export type SortBy = 'detectedAt' | 'startTime' | 'profit';
@@ -68,4 +75,37 @@ export interface SurebetFilters {
   minProfit: number;
   search: string;
   sortBy: SortBy;
+}
+
+/** Cuota individual que paga por encima de la probabilidad de consenso del mercado */
+export interface ValueBetRecord {
+  id: string;
+  sport: Sport;
+  competition: string;
+  eventName: string;
+  market: string;
+  startTime: string;
+  detectedAt: string;
+  outcomeId: string;
+  outcomeLabel: string;
+  bookmaker: string;
+  odds: number;
+  fairOdds: number;
+  fairProbability: number;
+  evPercent: number;
+  booksUsed: number;
+  suggestedStake: number;
+  bankrollUsed: number;
+  isDemo: boolean;
+  source: string;
+}
+
+export type ValueBetSortBy = 'ev' | 'startTime' | 'detectedAt';
+
+export interface ValueBetFilters {
+  sport: Sport | 'todos';
+  bookmaker: string | 'todas';
+  minEv: number;
+  search: string;
+  sortBy: ValueBetSortBy;
 }

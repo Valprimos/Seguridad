@@ -52,17 +52,29 @@ export function initDb(): void {
       sound_alerts_enabled INTEGER NOT NULL,
       browser_notifications_enabled INTEGER NOT NULL,
       discreet_mode_enabled INTEGER NOT NULL DEFAULT 0,
-      discreet_rounding_unit REAL NOT NULL DEFAULT 5
+      discreet_rounding_unit REAL NOT NULL DEFAULT 5,
+      blocked_bookmakers TEXT NOT NULL DEFAULT '[]',
+      value_bets_enabled INTEGER NOT NULL DEFAULT 1,
+      min_ev_percent REAL NOT NULL DEFAULT 1,
+      kelly_fraction REAL NOT NULL DEFAULT 0.25,
+      webhook_url TEXT NOT NULL DEFAULT '',
+      webhook_alerts_enabled INTEGER NOT NULL DEFAULT 0
     );
   `);
 
   // Migración suave para bases de datos creadas ANTES de añadir estas
-  // dos columnas: si la tabla ya existía sin ellas, CREATE TABLE IF NOT
+  // columnas: si la tabla ya existía sin ellas, CREATE TABLE IF NOT
   // EXISTS no las añade solo, así que lo hacemos a mano (ignorando el
   // error si ya existen).
   for (const alter of [
     'ALTER TABLE settings ADD COLUMN discreet_mode_enabled INTEGER NOT NULL DEFAULT 0',
     'ALTER TABLE settings ADD COLUMN discreet_rounding_unit REAL NOT NULL DEFAULT 5',
+    "ALTER TABLE settings ADD COLUMN blocked_bookmakers TEXT NOT NULL DEFAULT '[]'",
+    'ALTER TABLE settings ADD COLUMN value_bets_enabled INTEGER NOT NULL DEFAULT 1',
+    'ALTER TABLE settings ADD COLUMN min_ev_percent REAL NOT NULL DEFAULT 1',
+    'ALTER TABLE settings ADD COLUMN kelly_fraction REAL NOT NULL DEFAULT 0.25',
+    "ALTER TABLE settings ADD COLUMN webhook_url TEXT NOT NULL DEFAULT ''",
+    'ALTER TABLE settings ADD COLUMN webhook_alerts_enabled INTEGER NOT NULL DEFAULT 0',
   ]) {
     try {
       db.exec(alter);
@@ -75,8 +87,8 @@ export function initDb(): void {
   if (!existing) {
     db.prepare(
       `INSERT INTO settings
-        (id, default_bankroll, currency, language, theme, min_profit_alert, sound_alerts_enabled, browser_notifications_enabled, discreet_mode_enabled, discreet_rounding_unit)
-       VALUES (1, 1000, 'EUR', 'es', 'dark', 1.5, 1, 1, 0, 5)`
+        (id, default_bankroll, currency, language, theme, min_profit_alert, sound_alerts_enabled, browser_notifications_enabled, discreet_mode_enabled, discreet_rounding_unit, blocked_bookmakers, value_bets_enabled, min_ev_percent, kelly_fraction, webhook_url, webhook_alerts_enabled)
+       VALUES (1, 1000, 'EUR', 'es', 'dark', 1.5, 1, 1, 0, 5, '[]', 1, 1, 0.25, '', 0)`
     ).run();
   }
 }

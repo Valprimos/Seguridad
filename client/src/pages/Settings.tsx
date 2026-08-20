@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppSettings } from '../types';
+import { api } from '../services/api';
 
 interface SettingsPageProps {
   settings: AppSettings;
@@ -10,6 +11,19 @@ export function SettingsPage({ settings, onSave }: SettingsPageProps) {
   const [draft, setDraft] = useState<AppSettings>(settings);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [allBookmakers, setAllBookmakers] = useState<string[]>([]);
+  const [loadingBookmakers, setLoadingBookmakers] = useState(true);
+  const [webhookTestState, setWebhookTestState] = useState<'idle' | 'sending' | 'ok' | 'error'>(
+    'idle'
+  );
+
+  useEffect(() => {
+    api
+      .getBookmakers()
+      .then((res) => setAllBookmakers(res.data))
+      .catch(() => setAllBookmakers([]))
+      .finally(() => setLoadingBookmakers(false));
+  }, []);
 
   async function handleSave() {
     setSaving(true);
@@ -24,6 +38,38 @@ export function SettingsPage({ settings, onSave }: SettingsPageProps) {
     if (typeof Notification === 'undefined') return;
     await Notification.requestPermission();
   }
+
+  function toggleBookmaker(bookmaker: string) {
+    setDraft((prev) => {
+      const blocked = new Set(prev.blockedBookmakers);
+      if (blocked.has(bookmaker)) {
+        blocked.delete(bookmaker);
+      } else {
+        blocked.add(bookmaker);
+      }
+      return { ...prev, blockedBookmakers: Array.from(blocked) };
+    });
+  }
+
+  async function handleTestWebhook() {
+    if (!draft.webhookUrl) return;
+    setWebhookTestState('sending');
+    try {
+      await api.testWebhook(draft.webhookUrl);
+      setWebhookTestState('ok');
+    } catch {
+      setWebhookTestState('error');
+    } finally {
+      setTimeout(() => setWebhookTestState('idle'), 3000);
+    }
+  }
+
+  // Une las casas conocidas por el backend con las que ya estuvieran
+  // vetadas anteriormente (por si una casa deja de aparecer en las
+  // cuotas actuales, no perdemos el registro de que estaba vetada).
+  const bookmakersToShow = Array.from(
+    new Set([...allBookmakers, ...draft.blockedBookmakers])
+  ).sort();
 
   return (
     <div>
@@ -188,6 +234,188 @@ export function SettingsPage({ settings, onSave }: SettingsPageProps) {
             value={draft.discreetRoundingUnit}
             onChange={(e) => setDraft({ ...draft, discreetRoundingUnit: Number(e.target.value) })}
           />
+        </div>
+      </div>
+
+      <div className="panel" style={{ marginTop: 20 }}>
+        <h3 style={{ marginTop: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
+          Cuotas de alto valor
+        </h3>
+        <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: -6 }}>
+          Además de las surebets (arbitraje entre varias casas), la app calcula "cuotas de
+          valor": apuestas individuales cuyo precio supera la probabilidad de consenso del
+          mercado (des-margenando las cuotas de todas las casas que cubren el evento).
+        </p>
+
+        <div className="settings-row">
+          <div>
+            <div className="settings-label">Activar cuotas de alto valor</div>
+            <div className="settings-desc">Se muestran en la página "Cuotas de valor".</div>
+          </div>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={draft.valueBetsEnabled}
+              onChange={(e) => setDraft({ ...draft, valueBetsEnabled: e.target.checked })}
+            />
+            <span className="slider" />
+          </label>
+        </div>
+
+        <div className="settings-row">
+          <div>
+            <div className="settings-label">EV mínimo para considerarla "de valor"</div>
+            <div className="settings-desc">
+              Valor esperado mínimo (%) que debe superar una cuota frente al consenso del
+              mercado.
+            </div>
+          </div>
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            style={{ width: 90 }}
+            value={draft.minEvPercent}
+            onChange={(e) => setDraft({ ...draft, minEvPercent: Number(e.target.value) })}
+          />
+        </div>
+
+        <div className="settings-row">
+          <div>
+            <div className="settings-label">Fracción de Kelly para el stake sugerido</div>
+            <div className="settings-desc">
+              1 = Kelly completo (máxima varianza), 0.25 = Kelly ¼ (recomendado, más
+              conservador). Se usa para calcular la apuesta sugerida en cada cuota de valor.
+            </div>
+          </div>
+          <input
+            type="number"
+            min={0.05}
+            max={1}
+            step={0.05}
+            style={{ width: 90 }}
+            value={draft.kellyFraction}
+            onChange={(e) => setDraft({ ...draft, kellyFraction: Number(e.target.value) })}
+          />
+        </div>
+      </div>
+
+      <div className="panel" style={{ marginTop: 20 }}>
+        <h3 style={{ marginTop: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
+          Vetar casas de apuestas
+        </h3>
+        <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: -6 }}>
+          Desmarca una casa para excluirla de TODOS los cálculos (surebets y cuotas de
+          valor) — por ejemplo, si esa cuenta ya está limitada, o simplemente no operas ahí.
+          Las casas marcadas (✓) se tienen en cuenta con normalidad.
+        </p>
+
+        {loadingBookmakers ? (
+          <div className="empty-state" style={{ padding: '20px 0' }}>
+            <span className="spinner" /> Cargando casas de apuestas...
+          </div>
+        ) : bookmakersToShow.length === 0 ? (
+          <div className="empty-state" style={{ padding: '20px 0' }}>
+            Aún no hay casas de apuestas disponibles (vuelve a intentarlo cuando haya cuotas
+            cargadas).
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+              <button className="btn" onClick={() => setDraft({ ...draft, blockedBookmakers: [] })}>
+                Marcar todas
+              </button>
+              <button
+                className="btn"
+                onClick={() => setDraft({ ...draft, blockedBookmakers: [...bookmakersToShow] })}
+              >
+                Desmarcar todas
+              </button>
+              <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', alignSelf: 'center' }}>
+                {bookmakersToShow.length - draft.blockedBookmakers.length} de{' '}
+                {bookmakersToShow.length} activas
+              </span>
+            </div>
+
+            <div className="bookmaker-grid">
+              {bookmakersToShow.map((bookmaker) => {
+                const blocked = draft.blockedBookmakers.includes(bookmaker);
+                return (
+                  <label
+                    key={bookmaker}
+                    className={`bookmaker-chip${blocked ? ' blocked' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!blocked}
+                      onChange={() => toggleBookmaker(bookmaker)}
+                    />
+                    {bookmaker}
+                  </label>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="panel" style={{ marginTop: 20 }}>
+        <h3 style={{ marginTop: 0, fontSize: 14, color: 'var(--text-secondary)' }}>
+          Alertas por webhook / móvil
+        </h3>
+        <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: -6 }}>
+          El sonido y las notificaciones del navegador solo funcionan con la pestaña abierta.
+          Configura una URL de webhook para recibir un aviso en el móvil aunque tengas la app
+          cerrada — funciona con{' '}
+          <a href="https://ntfy.sh" target="_blank" rel="noreferrer" style={{ color: 'var(--blue)' }}>
+            ntfy.sh
+          </a>{' '}
+          (gratis, sin cuenta: crea un tema y usa{' '}
+          <code>https://ntfy.sh/tu-tema-secreto</code>), y también con webhooks de Discord o
+          Slack.
+        </p>
+
+        <div className="settings-row">
+          <div>
+            <div className="settings-label">Activar alertas por webhook</div>
+            <div className="settings-desc">
+              Avisa de nuevas surebets (según el beneficio mínimo de arriba) y cuotas de
+              valor.
+            </div>
+          </div>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={draft.webhookAlertsEnabled}
+              onChange={(e) => setDraft({ ...draft, webhookAlertsEnabled: e.target.checked })}
+            />
+            <span className="slider" />
+          </label>
+        </div>
+
+        <div className="settings-row">
+          <div style={{ flex: 1 }}>
+            <div className="settings-label">URL del webhook</div>
+            <input
+              type="text"
+              placeholder="https://ntfy.sh/tu-tema-secreto"
+              style={{ width: '100%', marginTop: 8 }}
+              value={draft.webhookUrl}
+              onChange={(e) => setDraft({ ...draft, webhookUrl: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14 }}>
+          <button className="btn" onClick={handleTestWebhook} disabled={!draft.webhookUrl || webhookTestState === 'sending'}>
+            {webhookTestState === 'sending' ? 'Enviando...' : 'Enviar prueba'}
+          </button>
+          {webhookTestState === 'ok' && (
+            <span style={{ color: 'var(--green)', fontSize: 13 }}>✓ Enviada</span>
+          )}
+          {webhookTestState === 'error' && (
+            <span style={{ color: 'var(--red)', fontSize: 13 }}>✕ Error al enviar</span>
+          )}
         </div>
       </div>
 

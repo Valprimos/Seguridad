@@ -15,14 +15,30 @@ import { getAllOdds } from '../providers';
 import { detectSurebets } from '../services/surebetDetector';
 import { calculateArbitrage, OutcomeInput } from '../math/arbitrage';
 import { SurebetRecord } from '../types';
+import { filterBlockedBookmakers } from '../utils/bookmakers';
+import { notifyNewOpportunities } from '../services/webhookNotifier';
 
 export const surebetsRouter = Router();
 
-function getDefaultBankroll(): number {
-  const row = db
-    .prepare('SELECT default_bankroll as bankroll FROM settings WHERE id = 1')
-    .get() as { bankroll: number } | undefined;
-  return row?.bankroll ?? 1000;
+interface LiveSettings {
+  bankroll: number;
+  currency: string;
+  blockedBookmakers: string[];
+  minProfitAlert: number;
+  webhookUrl: string;
+  webhookAlertsEnabled: boolean;
+}
+
+function getLiveSettings(): LiveSettings {
+  const row = db.prepare('SELECT * FROM settings WHERE id = 1').get() as any;
+  return {
+    bankroll: row?.default_bankroll ?? 1000,
+    currency: row?.currency ?? 'EUR',
+    blockedBookmakers: JSON.parse(row?.blocked_bookmakers || '[]'),
+    minProfitAlert: row?.min_profit_alert ?? 1.5,
+    webhookUrl: row?.webhook_url || '',
+    webhookAlertsEnabled: !!row?.webhook_alerts_enabled,
+  };
 }
 
 function saveSurebet(record: SurebetRecord): void {
@@ -71,10 +87,23 @@ function rowToRecord(row: any): SurebetRecord {
 // GET /api/surebets/live?bankroll=1000
 surebetsRouter.get('/live', async (req, res) => {
   try {
-    const bankroll = Number(req.query.bankroll) || getDefaultBankroll();
+    const settings = getLiveSettings();
+    const bankroll = Number(req.query.bankroll) || settings.bankroll;
     const events = await getAllOdds();
-    const surebets = detectSurebets(events, bankroll);
+    const allowedEvents = filterBlockedBookmakers(events, settings.blockedBookmakers);
+    const surebets = detectSurebets(allowedEvents, bankroll);
     surebets.forEach(saveSurebet);
+
+    notifyNewOpportunities(
+      'surebets',
+      surebets.filter((s) => s.profitPercent >= settings.minProfitAlert),
+      settings.webhookUrl,
+      settings.webhookAlertsEnabled,
+      (s) =>
+        `${s.eventName} (${s.competition}) — ${s.profitPercent.toFixed(2)}% beneficio, ` +
+        `${s.guaranteedProfit.toFixed(2)} ${settings.currency} garantizados en ${s.bookmakers.join(', ')}`
+    );
+
     res.json({ data: surebets, generatedAt: new Date().toISOString() });
   } catch (err) {
     console.error(err);
