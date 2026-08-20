@@ -261,12 +261,13 @@ function ArbitrageMode({ settings }: { settings: AppSettings }) {
                 Reparto en modo discreto (importes redondeados)
               </h4>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 0, marginBottom: 10 }}>
-                Beneficio si gana el peor resultado:{' '}
+                Peor caso, si gana <b>{discreet.worstCaseOutcome.label}</b> ({discreet.worstCaseOutcome.bookmaker}):{' '}
                 <strong style={{ color: discreet.isSafe ? 'var(--green)' : 'var(--red)' }}>
                   {formatCurrency(discreet.worstCaseProfit, settings.currency)} (
                   {formatPercent(discreet.worstCaseProfitPercent)})
                 </strong>
-                {' · '}si gana el mejor: {formatCurrency(discreet.bestCaseProfit, settings.currency)}
+                {' · '}mejor caso, si gana <b>{discreet.bestCaseOutcome.label}</b> ({discreet.bestCaseOutcome.bookmaker}):{' '}
+                {formatCurrency(discreet.bestCaseProfit, settings.currency)}
                 {!discreet.isSafe && (
                   <>
                     {' — '}

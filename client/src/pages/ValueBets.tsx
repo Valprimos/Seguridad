@@ -3,7 +3,7 @@ import { StatCard } from '../components/StatCard';
 import { ValueBetFilters } from '../components/ValueBetFilters';
 import { ValueBetTable } from '../components/ValueBetTable';
 import { useValueBets } from '../hooks/useValueBets';
-import { AppSettings, ValueBetFilters as ValueBetFiltersType } from '../types';
+import { AppSettings, ValueBetFilters as ValueBetFiltersType, ValueBetRecord } from '../types';
 import { formatCurrency, formatPercent, timeAgo } from '../utils/format';
 
 interface ValueBetsPageProps {
@@ -46,7 +46,19 @@ export function ValueBetsPage({ settings }: ValueBetsPageProps) {
       return true;
     });
 
-    const sorted = [...result];
+    // Un mismo partido puede generar varias cuotas de valor (distintos
+    // resultados y/o distintas casas para el mismo evento). Para no
+    // repetir el partido varias veces en el listado, solo se muestra la
+    // de mayor EV por evento.
+    const bestPerEvent = new Map<string, ValueBetRecord>();
+    for (const v of result) {
+      const current = bestPerEvent.get(v.eventId);
+      if (!current || v.evPercent > current.evPercent) {
+        bestPerEvent.set(v.eventId, v);
+      }
+    }
+
+    const sorted = Array.from(bestPerEvent.values());
     if (filters.sortBy === 'startTime') {
       sorted.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
     } else if (filters.sortBy === 'ev') {

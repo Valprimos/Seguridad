@@ -117,7 +117,13 @@ export function SurebetTable({
                         {formatCurrency(discreet.worstCaseProfit, currency)} peor caso
                       </span>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                        si gana <b>{discreet.worstCaseOutcome.label}</b> ({discreet.worstCaseOutcome.bookmaker})
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
                         hasta {formatCurrency(discreet.bestCaseProfit, currency)} mejor caso
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                        si gana <b>{discreet.bestCaseOutcome.label}</b> ({discreet.bestCaseOutcome.bookmaker})
                       </div>
                     </>
                   ) : (

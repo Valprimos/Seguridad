@@ -37,14 +37,24 @@ export interface DiscreetOutcomeResult extends DiscreetOutcomeInput {
   roundedPayout: number;
 }
 
+/** Qué resultado concreto produce el peor/mejor caso, para poder mostrarlo en la UI */
+export interface DiscreetCaseOutcome {
+  label: string;
+  bookmaker: string;
+}
+
 export interface DiscreetModeResult {
   outcomes: DiscreetOutcomeResult[];
   totalStake: number;
   /** Beneficio en el PEOR de los resultados posibles (ya no es igual en todos, a diferencia del cálculo exacto) */
   worstCaseProfit: number;
   worstCaseProfitPercent: number;
+  /** Qué resultado (y en qué casa) produce ese peor caso */
+  worstCaseOutcome: DiscreetCaseOutcome;
   /** Beneficio en el MEJOR de los resultados posibles */
   bestCaseProfit: number;
+  /** Qué resultado (y en qué casa) produce ese mejor caso */
+  bestCaseOutcome: DiscreetCaseOutcome;
   /** false si, incluso ajustando, algún resultado quedaría en pérdidas */
   isSafe: boolean;
 }
@@ -102,13 +112,23 @@ export function applyDiscreetRounding(
   const profits = outcomeResults.map((o) => o.roundedPayout - totalStake);
   const worstCaseProfit = Math.round(Math.min(...profits) * 100) / 100;
   const bestCaseProfit = Math.round(Math.max(...profits) * 100) / 100;
+  const worstIndex = profits.indexOf(Math.min(...profits));
+  const bestIndex = profits.indexOf(Math.max(...profits));
 
   return {
     outcomes: outcomeResults,
     totalStake: Math.round(totalStake * 100) / 100,
     worstCaseProfit,
     worstCaseProfitPercent: Math.round((worstCaseProfit / totalStake) * 100 * 100) / 100,
+    worstCaseOutcome: {
+      label: outcomeResults[worstIndex].label,
+      bookmaker: outcomeResults[worstIndex].bookmaker,
+    },
     bestCaseProfit,
+    bestCaseOutcome: {
+      label: outcomeResults[bestIndex].label,
+      bookmaker: outcomeResults[bestIndex].bookmaker,
+    },
     isSafe: worstCaseProfit >= 0,
   };
 }
