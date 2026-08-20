@@ -16,6 +16,7 @@ import {
   Sport,
   Stats,
   SurebetRecord,
+  ValueBetRecord,
 } from '../types';
 import { OutcomeInput, ArbitrageResult } from '../math/arbitrage';
 
@@ -82,5 +83,25 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(settings),
     });
+  },
+
+  testWebhook(webhookUrl: string): Promise<{ ok: boolean }> {
+    return request('/settings/test-webhook', {
+      method: 'POST',
+      body: JSON.stringify({ webhookUrl }),
+    });
+  },
+
+  getLiveValueBets(
+    bankroll: number,
+    minEv?: number
+  ): Promise<{ data: ValueBetRecord[]; generatedAt: string; disabled?: boolean }> {
+    const query = new URLSearchParams({ bankroll: String(bankroll) });
+    if (minEv !== undefined) query.set('minEv', String(minEv));
+    return request(`/valuebets/live?${query.toString()}`);
+  },
+
+  getBookmakers(): Promise<{ data: string[] }> {
+    return request('/bookmakers');
   },
 };

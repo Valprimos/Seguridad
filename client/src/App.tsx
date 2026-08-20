@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
+import { ValueBetsPage } from './pages/ValueBets';
 import { Calculator } from './pages/Calculator';
 import { History } from './pages/History';
 import { Statistics } from './pages/Statistics';
@@ -46,6 +47,7 @@ export default function App() {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Dashboard settings={settings} />} />
+            <Route path="/valor" element={<ValueBetsPage settings={settings} />} />
             <Route path="/calculadora" element={<Calculator settings={settings} />} />
             <Route path="/historial" element={<History settings={settings} />} />
             <Route path="/estadisticas" element={<Statistics settings={settings} />} />

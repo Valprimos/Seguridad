@@ -6,6 +6,8 @@ import express from 'express';
 import cors from 'cors';
 import { initDb } from './db/db';
 import { surebetsRouter } from './routes/surebets';
+import { valueBetsRouter } from './routes/valuebets';
+import { bookmakersRouter } from './routes/bookmakers';
 import { settingsRouter } from './routes/settings';
 import { SPORTS } from './types';
 import { isUsingRealData } from './providers';
@@ -35,6 +37,8 @@ app.get('/api/sports', (_req, res) => {
 });
 
 app.use('/api/surebets', surebetsRouter);
+app.use('/api/valuebets', valueBetsRouter);
+app.use('/api/bookmakers', bookmakersRouter);
 app.use('/api/settings', settingsRouter);
 
 app.listen(PORT, () => {

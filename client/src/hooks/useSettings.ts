@@ -12,6 +12,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   browserNotificationsEnabled: true,
   discreetModeEnabled: false,
   discreetRoundingUnit: 5,
+  blockedBookmakers: [],
+  valueBetsEnabled: true,
+  minEvPercent: 1,
+  kellyFraction: 0.25,
+  webhookUrl: '',
+  webhookAlertsEnabled: false,
 };
 
 export function useSettings() {

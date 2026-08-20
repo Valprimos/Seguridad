@@ -27,7 +27,24 @@ export function isUsingRealData(): boolean {
   return providers.some((p) => !p.isDemo);
 }
 
+// Caché en memoria muy corta (unos segundos) del resultado combinado de
+// todos los providers. Antes, cada endpoint que consulta cuotas
+// (/surebets/live, /valuebets/live, /bookmakers) llamaba a getAllOdds()
+// por separado; con el provider DEMO (que genera cuotas aleatorias en
+// cada llamada) eso significaba que, dentro del MISMO refresco del
+// frontend, cada endpoint veía datos ligeramente distintos — por
+// ejemplo, la lista de casas para vetar no coincidía exactamente con
+// las casas usadas al detectar surebets. Esta caché asegura que todas
+// las peticiones que caen dentro de la misma ventana ven el mismo
+// snapshot de cuotas.
+const ODDS_CACHE_TTL_MS = 20_000;
+let oddsCache: { data: MarketEvent[]; timestamp: number } | null = null;
+
 export async function getAllOdds(): Promise<MarketEvent[]> {
+  if (oddsCache && Date.now() - oddsCache.timestamp < ODDS_CACHE_TTL_MS) {
+    return oddsCache.data;
+  }
+
   const results = await Promise.all(
     providers.map((p) =>
       p.fetchOdds().catch((err) => {
@@ -37,7 +54,10 @@ export async function getAllOdds(): Promise<MarketEvent[]> {
       })
     )
   );
-  return results.flat();
+
+  const data = results.flat();
+  oddsCache = { data, timestamp: Date.now() };
+  return data;
 }
 
 export { OddsProvider };

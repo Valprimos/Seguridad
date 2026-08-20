@@ -319,6 +319,18 @@ button {
   font-size: 13px;
 }
 
+.ev-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: var(--blue);
+  background: rgba(59, 130, 246, 0.12);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
 .outcomes-list {
   display: flex;
   flex-direction: column;
@@ -529,6 +541,44 @@ button {
   font-size: 12.5px;
   color: var(--text-secondary);
   margin-top: 2px;
+}
+
+/* ---------- Veto de casas de apuestas ---------- */
+
+.bookmaker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.bookmaker-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: border-color var(--transition), opacity var(--transition);
+  user-select: none;
+}
+
+.bookmaker-chip:hover {
+  border-color: #2a3644;
+}
+
+.bookmaker-chip.blocked {
+  opacity: 0.5;
+}
+
+.bookmaker-chip input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
+  cursor: pointer;
 }
 
 .empty-state {
