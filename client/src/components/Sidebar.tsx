@@ -5,6 +5,7 @@ const LINKS = [
   { to: '/valor', label: 'Cuotas de valor', icon: '💎' },
   { to: '/calculadora', label: 'Calculadora', icon: '🧮' },
   { to: '/historial', label: 'Historial', icon: '🕒' },
+  { to: '/resultados', label: 'Resultados', icon: '🏁' },
   { to: '/estadisticas', label: 'Estadísticas', icon: '📈' },
   { to: '/configuracion', label: 'Configuración', icon: '⚙️' },
 ];

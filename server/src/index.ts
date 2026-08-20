@@ -9,6 +9,7 @@ import { surebetsRouter } from './routes/surebets';
 import { valueBetsRouter } from './routes/valuebets';
 import { bookmakersRouter } from './routes/bookmakers';
 import { oddsRouter } from './routes/odds';
+import { resultsRouter } from './routes/results';
 import { settingsRouter } from './routes/settings';
 import { SPORTS } from './types';
 import { isUsingRealData } from './providers';
@@ -41,6 +42,7 @@ app.use('/api/surebets', surebetsRouter);
 app.use('/api/valuebets', valueBetsRouter);
 app.use('/api/bookmakers', bookmakersRouter);
 app.use('/api/odds', oddsRouter);
+app.use('/api/results', resultsRouter);
 app.use('/api/settings', settingsRouter);
 
 app.listen(PORT, () => {

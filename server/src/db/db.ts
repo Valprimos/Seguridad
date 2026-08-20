@@ -42,6 +42,45 @@ export function initDb(): void {
     CREATE INDEX IF NOT EXISTS idx_surebets_detected_at ON surebets (detected_at);
     CREATE INDEX IF NOT EXISTS idx_surebets_sport ON surebets (sport);
 
+    CREATE TABLE IF NOT EXISTS value_bets (
+      id TEXT PRIMARY KEY,
+      event_id TEXT NOT NULL,
+      sport TEXT NOT NULL,
+      competition TEXT NOT NULL,
+      event_name TEXT NOT NULL,
+      market TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      detected_at TEXT NOT NULL,
+      outcome_id TEXT NOT NULL,
+      outcome_label TEXT NOT NULL,
+      bookmaker TEXT NOT NULL,
+      odds REAL NOT NULL,
+      fair_odds REAL NOT NULL,
+      fair_probability REAL NOT NULL,
+      ev_percent REAL NOT NULL,
+      books_used INTEGER NOT NULL,
+      suggested_stake REAL NOT NULL,
+      bankroll_used REAL NOT NULL,
+      is_demo INTEGER NOT NULL,
+      source TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_value_bets_detected_at ON value_bets (detected_at);
+    CREATE INDEX IF NOT EXISTS idx_value_bets_event_id ON value_bets (event_id);
+
+    -- Resultado REAL de un evento (qué resultado ganó), introducido a mano
+    -- por el usuario (no hay proveedor de resultados conectado). Un único
+    -- resultado por evento, compartido entre surebets y cuotas de valor:
+    -- ambas se "liquidan" (calculan beneficio/pérdida real y pasan a
+    -- contar en el saldo) en cuanto aparece aquí una fila con su event_id.
+    CREATE TABLE IF NOT EXISTS event_results (
+      event_id TEXT PRIMARY KEY,
+      event_name TEXT NOT NULL,
+      winning_outcome_id TEXT NOT NULL,
+      winning_outcome_label TEXT NOT NULL,
+      recorded_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS settings (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       default_bankroll REAL NOT NULL,

@@ -110,3 +110,56 @@ export interface ValueBetRecord {
   isDemo: boolean;
   source: string;
 }
+
+/** Resultado REAL de un evento, introducido a mano (no hay proveedor de
+ * resultados conectado). Un único resultado por evento, compartido entre
+ * surebets y cuotas de valor: ambas se liquidan contra este mismo dato. */
+export interface EventResult {
+  eventId: string;
+  eventName: string;
+  winningOutcomeId: string;
+  winningOutcomeLabel: string;
+  recordedAt: string;
+}
+
+/** Evento estudiado (con surebet y/o cuota de valor detectada) que aún no
+ * tiene un resultado registrado, con sus posibles resultados para poder
+ * elegir cuál ganó desde el formulario de registro manual. */
+export interface PendingResultEvent {
+  eventId: string;
+  eventName: string;
+  competition: string;
+  sport: Sport;
+  market: string;
+  startTime: string;
+  outcomes: { id: string; label: string }[];
+}
+
+/** SurebetRecord con la información de liquidación ya calculada (para /history) */
+export interface SettledSurebetRecord extends SurebetRecord {
+  settled: boolean;
+  resultOutcomeLabel: string | null;
+  /** Beneficio real: si está liquidada, siempre = guaranteedProfit (una surebet
+   * gana lo mismo gane quien gane, por eso es "garantizado"); null si está pendiente. */
+  actualProfit: number | null;
+}
+
+/** ValueBetRecord con la información de liquidación ya calculada (para /history).
+ * A diferencia de una surebet, una cuota de valor SÍ depende del resultado real:
+ * se gana (suggestedStake × (odds − 1)) si acierta, o se pierde (−suggestedStake) si no. */
+export interface SettledValueBetRecord extends ValueBetRecord {
+  settled: boolean;
+  resultOutcomeLabel: string | null;
+  won: boolean | null;
+  actualProfit: number | null;
+}
+
+export interface ResultsSummary {
+  /** Beneficio/pérdida neto acumulado de todo lo liquidado (surebets + cuotas de valor) */
+  netBalance: number;
+  settledSurebets: number;
+  settledValueBets: number;
+  valueBetsWon: number;
+  valueBetsLost: number;
+  pendingEvents: number;
+}

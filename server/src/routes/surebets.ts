@@ -17,6 +17,7 @@ import { calculateArbitrage, OutcomeInput } from '../math/arbitrage';
 import { SurebetRecord } from '../types';
 import { filterBlockedBookmakers } from '../utils/bookmakers';
 import { notifyNewOpportunities } from '../services/webhookNotifier';
+import { attachSurebetSettlement, getAllEventResults } from '../services/resultsService';
 
 export const surebetsRouter = Router();
 
@@ -148,7 +149,8 @@ surebetsRouter.get('/history', (req, res) => {
     records = records.filter((r) => r.bookmakers.includes(String(bookmaker)));
   }
 
-  res.json({ data: records });
+  const results = getAllEventResults();
+  res.json({ data: records.map((r) => attachSurebetSettlement(r, results)) });
 });
 
 // GET /api/surebets/stats

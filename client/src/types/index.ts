@@ -134,3 +134,47 @@ export interface EventOdds {
   isDemo: boolean;
   source: string;
 }
+
+/** Resultado REAL de un evento, introducido a mano en "Resultados". */
+export interface EventResult {
+  eventId: string;
+  eventName: string;
+  winningOutcomeId: string;
+  winningOutcomeLabel: string;
+  recordedAt: string;
+}
+
+/** Evento estudiado (con surebet y/o cuota de valor guardada) sin resultado aún. */
+export interface PendingResultEvent {
+  eventId: string;
+  eventName: string;
+  competition: string;
+  sport: Sport;
+  market: string;
+  startTime: string;
+  outcomes: { id: string; label: string }[];
+}
+
+/** SurebetRecord con la liquidación ya calculada (respuesta de /surebets/history) */
+export interface SettledSurebetRecord extends SurebetRecord {
+  settled: boolean;
+  resultOutcomeLabel: string | null;
+  actualProfit: number | null;
+}
+
+/** ValueBetRecord con la liquidación ya calculada (respuesta de /valuebets/history) */
+export interface SettledValueBetRecord extends ValueBetRecord {
+  settled: boolean;
+  resultOutcomeLabel: string | null;
+  won: boolean | null;
+  actualProfit: number | null;
+}
+
+export interface ResultsSummary {
+  netBalance: number;
+  settledSurebets: number;
+  settledValueBets: number;
+  valueBetsWon: number;
+  valueBetsLost: number;
+  pendingEvents: number;
+}

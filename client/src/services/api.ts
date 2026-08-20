@@ -14,6 +14,11 @@
 import {
   AppSettings,
   EventOdds,
+  EventResult,
+  PendingResultEvent,
+  ResultsSummary,
+  SettledSurebetRecord,
+  SettledValueBetRecord,
   Sport,
   Stats,
   SurebetRecord,
@@ -54,7 +59,7 @@ export const api = {
     minProfit?: number;
     search?: string;
     sortBy?: string;
-  }): Promise<{ data: SurebetRecord[] }> {
+  }): Promise<{ data: SettledSurebetRecord[] }> {
     const query = new URLSearchParams();
     if (params.sport && params.sport !== 'todos') query.set('sport', params.sport);
     if (params.bookmaker && params.bookmaker !== 'todas') query.set('bookmaker', params.bookmaker);
@@ -62,6 +67,22 @@ export const api = {
     if (params.search) query.set('search', params.search);
     if (params.sortBy) query.set('sortBy', params.sortBy);
     return request(`/surebets/history?${query.toString()}`);
+  },
+
+  getValueBetHistory(params: {
+    sport?: string;
+    bookmaker?: string;
+    minEv?: number;
+    search?: string;
+    sortBy?: string;
+  }): Promise<{ data: SettledValueBetRecord[] }> {
+    const query = new URLSearchParams();
+    if (params.sport && params.sport !== 'todos') query.set('sport', params.sport);
+    if (params.bookmaker && params.bookmaker !== 'todas') query.set('bookmaker', params.bookmaker);
+    if (params.minEv) query.set('minEv', String(params.minEv));
+    if (params.search) query.set('search', params.search);
+    if (params.sortBy) query.set('sortBy', params.sortBy);
+    return request(`/valuebets/history?${query.toString()}`);
   },
 
   getStats(): Promise<Stats> {
@@ -108,5 +129,29 @@ export const api = {
 
   getEventOdds(eventId: string): Promise<{ data: EventOdds }> {
     return request(`/odds/${encodeURIComponent(eventId)}`);
+  },
+
+  getPendingResults(): Promise<{ data: PendingResultEvent[] }> {
+    return request('/results/pending');
+  },
+
+  getResultsSummary(): Promise<ResultsSummary> {
+    return request('/results/summary');
+  },
+
+  recordResult(payload: {
+    eventId: string;
+    eventName: string;
+    winningOutcomeId: string;
+    winningOutcomeLabel: string;
+  }): Promise<{ data: EventResult }> {
+    return request('/results', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  deleteResult(eventId: string): Promise<{ ok: boolean }> {
+    return request(`/results/${encodeURIComponent(eventId)}`, { method: 'DELETE' });
   },
 };

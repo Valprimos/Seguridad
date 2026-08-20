@@ -107,3 +107,21 @@ URL de webhook (funciona con [ntfy.sh](https://ntfy.sh) sin necesidad de
 cuenta, y también con webhooks de Discord o Slack) para recibir un aviso
 push cuando aparezca una surebet o cuota de valor nueva, aunque tengas la
 app cerrada. Ver `server/src/services/webhookNotifier.ts`.
+
+## Resultados y saldo (registro manual)
+
+La app no tiene ningún proveedor de resultados deportivos conectado, así que
+en "Resultados" puedes registrar a mano qué resultado ganó cada partido
+estudiado (elige el partido y el resultado ganador en un desplegable). En
+cuanto se registra:
+
+- Las **surebets** de ese evento se marcan como liquidadas y suman su
+  `guaranteedProfit` al saldo (por definición de arbitraje, se gana lo mismo
+  gane el resultado que gane).
+- Las **cuotas de valor** de ese evento SÍ dependen del resultado: cada una
+  gana `suggestedStake × (odds − 1)` si acertó, o pierde `suggestedStake` si
+  no.
+
+El saldo neto y el listado combinado (surebets + cuotas de valor, liquidadas
+y pendientes) se ven en la página "Resultados"; un resultado registrado por
+error se puede deshacer con el botón ↺. Ver `server/src/services/resultsService.ts`.
