@@ -85,6 +85,8 @@ export interface AppSettings {
  * estimada a partir del consenso (des-margenado) de todas las casas que cubren el mismo evento. */
 export interface ValueBetRecord {
   id: string;
+  /** ID del evento del que procede (para poder consultar GET /api/odds/:eventId y comparar con otras casas) */
+  eventId: string;
   sport: Sport;
   competition: string;
   eventName: string;

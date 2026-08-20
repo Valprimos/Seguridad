@@ -13,6 +13,7 @@
 
 import {
   AppSettings,
+  EventOdds,
   Sport,
   Stats,
   SurebetRecord,
@@ -103,5 +104,9 @@ export const api = {
 
   getBookmakers(): Promise<{ data: string[] }> {
     return request('/bookmakers');
+  },
+
+  getEventOdds(eventId: string): Promise<{ data: EventOdds }> {
+    return request(`/odds/${encodeURIComponent(eventId)}`);
   },
 };

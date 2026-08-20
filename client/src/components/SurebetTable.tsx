@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { SPORT_LABELS, SurebetRecord } from '../types';
 import { applyDiscreetRounding } from '../utils/discreetMode';
 import { formatCurrency, formatDateTime, formatPercent, timeAgo } from '../utils/format';
+import { OddsModal } from './OddsModal';
 
 interface SurebetTableProps {
   surebets: SurebetRecord[];
@@ -15,6 +17,8 @@ export function SurebetTable({
   discreetModeEnabled = false,
   discreetRoundingUnit = 5,
 }: SurebetTableProps) {
+  const [openEvent, setOpenEvent] = useState<{ id: string; name: string } | null>(null);
+
   if (surebets.length === 0) {
     return (
       <div className="empty-state">
@@ -25,6 +29,13 @@ export function SurebetTable({
 
   return (
     <div style={{ overflowX: 'auto' }}>
+      {openEvent && (
+        <OddsModal
+          eventId={openEvent.id}
+          eventName={openEvent.name}
+          onClose={() => setOpenEvent(null)}
+        />
+      )}
       <table className="surebets-table">
         <thead>
           <tr>
@@ -62,7 +73,14 @@ export function SurebetTable({
             return (
               <tr key={s.id}>
                 <td data-label="Evento">
-                  <div style={{ fontWeight: 600 }}>{s.eventName}</div>
+                  <button
+                    className="row-link"
+                    style={{ fontWeight: 600 }}
+                    onClick={() => setOpenEvent({ id: s.id, name: s.eventName })}
+                    title="Ver todas las cuotas de otras casas"
+                  >
+                    {s.eventName}
+                  </button>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.competition}</div>
                   {s.isDemo && <span className="badge demo" style={{ marginTop: 6 }}>DEMO</span>}
                 </td>

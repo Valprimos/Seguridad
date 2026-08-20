@@ -543,6 +543,93 @@ button {
   margin-top: 2px;
 }
 
+/* ---------- Modal "ver otras cuotas" ---------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+  animation: fadeIn 150ms ease;
+}
+
+.modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.odds-group {
+  margin-bottom: 18px;
+}
+
+.odds-group:last-child {
+  margin-bottom: 0;
+}
+
+.odds-group h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.odds-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13.5px;
+}
+
+.odds-row:hover {
+  background: var(--bg-card-hover);
+}
+
+.odds-row.blocked {
+  opacity: 0.5;
+}
+
+.odds-row-bookmaker {
+  font-weight: 600;
+}
+
+.row-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.row-link:hover {
+  color: var(--green);
+  text-decoration: underline;
+}
+
 /* ---------- Veto de casas de apuestas ---------- */
 
 .bookmaker-grid {

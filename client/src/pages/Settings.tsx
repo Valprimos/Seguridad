@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AppSettings } from '../types';
 import { api } from '../services/api';
+import { KNOWN_BOOKMAKERS } from '../utils/knownBookmakers';
 
 interface SettingsPageProps {
   settings: AppSettings;
@@ -21,7 +22,10 @@ export function SettingsPage({ settings, onSave }: SettingsPageProps) {
     api
       .getBookmakers()
       .then((res) => setAllBookmakers(res.data))
-      .catch(() => setAllBookmakers([]))
+      // Si ni siquiera se puede contactar con el backend, se usa el
+      // catálogo conocido como último recurso: el listado de veto no
+      // debe quedarse vacío por un fallo de red puntual.
+      .catch(() => setAllBookmakers(KNOWN_BOOKMAKERS))
       .finally(() => setLoadingBookmakers(false));
   }, []);
 

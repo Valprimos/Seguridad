@@ -66,6 +66,7 @@ export function detectValueBetsForEvent(
         // ID ESTABLE: evento + resultado + casa, para que refrescos
         // sucesivos actualicen la misma fila en vez de duplicarla.
         id: `${event.id}::${quote.outcomeId}::${bookmaker}`,
+        eventId: event.id,
         sport: event.sport,
         competition: event.competition,
         eventName: event.eventName,

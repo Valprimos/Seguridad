@@ -21,26 +21,7 @@
 
 import { MarketEvent, Sport } from '../types';
 import { OddsProvider } from './types';
-
-// Nombres reales de casas de apuestas del mercado (solo como etiqueta;
-// las cuotas asociadas siguen siendo simuladas — ver cabecera del archivo).
-const DEMO_BOOKMAKERS = [
-  'Bet365',
-  'Bwin',
-  'William Hill',
-  'Betfair',
-  'Pinnacle',
-  '1xBet',
-  'Betway',
-  'Unibet',
-  'Marathonbet',
-  '888sport',
-  'Codere',
-  'Sportium',
-  'Betsson',
-  'LeoVegas',
-  'Interwetten',
-];
+import { KNOWN_BOOKMAKERS as DEMO_BOOKMAKERS } from '../data/bookmakers';
 
 interface EventTemplate {
   sport: Sport;

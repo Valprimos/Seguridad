@@ -80,6 +80,8 @@ export interface SurebetFilters {
 /** Cuota individual que paga por encima de la probabilidad de consenso del mercado */
 export interface ValueBetRecord {
   id: string;
+  /** ID del evento del que procede (para consultar GET /api/odds/:eventId) */
+  eventId: string;
   sport: Sport;
   competition: string;
   eventName: string;
@@ -108,4 +110,27 @@ export interface ValueBetFilters {
   minEv: number;
   search: string;
   sortBy: ValueBetSortBy;
+}
+
+/** Cuota completa de un evento (TODAS las casas, incluidas las vetadas) para
+ * el desplegable "ver otras cuotas" del Dashboard y de Cuotas de valor. */
+export interface EventOddsQuote {
+  outcomeId: string;
+  outcomeLabel: string;
+  bookmaker: string;
+  odds: number;
+  /** true si esa casa está vetada en Configuración (excluida de los cálculos automáticos) */
+  blocked: boolean;
+}
+
+export interface EventOdds {
+  id: string;
+  sport: Sport;
+  competition: string;
+  eventName: string;
+  market: string;
+  startTime: string;
+  quotes: EventOddsQuote[];
+  isDemo: boolean;
+  source: string;
 }

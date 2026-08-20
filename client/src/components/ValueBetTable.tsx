@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { SPORT_LABELS, ValueBetRecord } from '../types';
 import { formatCurrency, formatDateTime, formatPercent, timeAgo } from '../utils/format';
+import { OddsModal } from './OddsModal';
 
 interface ValueBetTableProps {
   valueBets: ValueBetRecord[];
@@ -7,6 +9,8 @@ interface ValueBetTableProps {
 }
 
 export function ValueBetTable({ valueBets, currency }: ValueBetTableProps) {
+  const [openEvent, setOpenEvent] = useState<{ id: string; name: string } | null>(null);
+
   if (valueBets.length === 0) {
     return (
       <div className="empty-state">
@@ -17,6 +21,13 @@ export function ValueBetTable({ valueBets, currency }: ValueBetTableProps) {
 
   return (
     <div style={{ overflowX: 'auto' }}>
+      {openEvent && (
+        <OddsModal
+          eventId={openEvent.id}
+          eventName={openEvent.name}
+          onClose={() => setOpenEvent(null)}
+        />
+      )}
       <table className="surebets-table">
         <thead>
           <tr>
@@ -36,7 +47,14 @@ export function ValueBetTable({ valueBets, currency }: ValueBetTableProps) {
           {valueBets.map((v) => (
             <tr key={v.id}>
               <td data-label="Evento">
-                <div style={{ fontWeight: 600 }}>{v.eventName}</div>
+                <button
+                  className="row-link"
+                  style={{ fontWeight: 600 }}
+                  onClick={() => setOpenEvent({ id: v.eventId, name: v.eventName })}
+                  title="Ver todas las cuotas de otras casas"
+                >
+                  {v.eventName}
+                </button>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{v.competition}</div>
                 {v.isDemo && <span className="badge demo" style={{ marginTop: 6 }}>DEMO</span>}
               </td>
